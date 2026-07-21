@@ -4,7 +4,6 @@ package service
 import (
 	"crypto/rand"
 	"errors"
-	"math/big"
 	"sync"
 )
 
@@ -16,13 +15,13 @@ const (
 
 type service struct {
 	urls map[string]string
-	mu   *sync.Mutex
+	mu   sync.RWMutex
 }
 
 func NewService() *service {
 	return &service{
 		urls: make(map[string]string),
-		mu:   &sync.Mutex{},
+		mu:   sync.RWMutex{},
 	}
 }
 
@@ -45,19 +44,20 @@ func (s *service) Shorten(url string) (string, error) {
 }
 
 func (s *service) GetURL(code string) string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	return s.urls[code]
 }
 
 func generateCode() (string, error) {
 	b := make([]byte, LENGTH)
-	charsetLen := big.NewInt(int64(len(CHARSET)))
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
 
 	for i := range b {
-		n, err := rand.Int(rand.Reader, charsetLen)
-		if err != nil {
-			return "", err
-		}
-		b[i] = CHARSET[n.Int64()]
+		b[i] = CHARSET[b[i]%byte(len(CHARSET))]
 	}
 
 	return string(b), nil

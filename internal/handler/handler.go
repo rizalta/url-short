@@ -4,7 +4,6 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -66,30 +65,21 @@ func (h *handler) shorten(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type GetURLRes struct {
-	URL string `json:"url"`
-}
-
 func (h *handler) getURL(w http.ResponseWriter, r *http.Request) {
 	code := chi.URLParam(r, "code")
 
 	if code == "" {
-		http.Error(w, "short url not found", http.StatusBadRequest)
+		http.Error(w, "code required", http.StatusBadRequest)
 		return
 	}
 
 	u := h.service.GetURL(code)
 	if u == "" {
-		http.Error(w, "url not found", http.StatusBadRequest)
+		http.Error(w, "url not found", http.StatusNotFound)
 		return
 	}
 
-	res := GetURLRes{u}
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	http.Redirect(w, r, u, http.StatusFound)
 }
 
 func (h *handler) Routes() *chi.Mux {
@@ -107,22 +97,11 @@ func normalizeURL(rawURL string) (string, error) {
 	}
 
 	if !strings.HasPrefix(rawURL, "https://") && !strings.HasPrefix(rawURL, "http://") {
-		rawURL = strings.TrimPrefix(rawURL, "//")
 		rawURL = "https://" + rawURL
 	}
 
-	u, err := url.Parse(rawURL)
-	if err != nil {
-		return "", ErrInvalidURL
-	}
-
-	host := u.Hostname()
-
-	if net.ParseIP(host) != nil {
-		return "", ErrInvalidURL
-	}
-
-	if !strings.Contains(host, ".") || strings.HasPrefix(host, ".") || strings.HasSuffix(host, ".") {
+	u, err := url.ParseRequestURI(rawURL)
+	if err != nil || u.Host == "" {
 		return "", ErrInvalidURL
 	}
 
