@@ -4,6 +4,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -100,10 +101,31 @@ func normalizeURL(rawURL string) (string, error) {
 		rawURL = "https://" + rawURL
 	}
 
-	u, err := url.ParseRequestURI(rawURL)
-	if err != nil || u.Host == "" {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return "", ErrInvalidURL
+	}
+
+	host := u.Hostname()
+	if host == "" {
+		return "", ErrInvalidURL
+	}
+
+	if !isValidHost(host) {
 		return "", ErrInvalidURL
 	}
 
 	return rawURL, nil
+}
+
+func isValidHost(host string) bool {
+	if host == "localhost" || net.ParseIP(host) != nil {
+		return true
+	}
+
+	if !strings.Contains(host, ".") || strings.HasPrefix(host, ".") || strings.HasSuffix(host, ".") {
+		return false
+	}
+
+	return true
 }

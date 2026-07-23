@@ -22,7 +22,10 @@ func main() {
 	s := service.NewService()
 	h := handler.NewHandler(s)
 
-	r.Mount("/", h.Routes())
+	r.Mount("/api", h.Routes())
+
+	fileServer := http.FileServer(http.Dir("web/dist/"))
+	r.Handle("/*", fileServer)
 
 	port := os.Getenv("PORT")
 	if port == "" {
