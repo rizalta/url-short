@@ -85,7 +85,7 @@ func (h *handler) getURL(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) Routes() *chi.Mux {
 	r := chi.NewRouter()
-	r.Post("/shorten", h.shorten)
+	r.Post("/api/shorten", h.shorten)
 	r.Get("/{code}", h.getURL)
 	return r
 }

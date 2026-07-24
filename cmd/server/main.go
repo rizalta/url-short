@@ -22,10 +22,14 @@ func main() {
 	s := service.NewService()
 	h := handler.NewHandler(s)
 
-	r.Mount("/api", h.Routes())
+	r.Mount("/", h.Routes())
 
-	fileServer := http.FileServer(http.Dir("web/dist/"))
-	r.Handle("/*", fileServer)
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./web/dist/index.html")
+	})
+
+	fs := http.FileServer(http.Dir("./web/dist/assets"))
+	r.Handle("/assets/*", http.StripPrefix("/assets/", fs))
 
 	port := os.Getenv("PORT")
 	if port == "" {

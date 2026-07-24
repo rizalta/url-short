@@ -33,7 +33,7 @@ const App = () => {
       </form>
 
       {error ? <p>{error}</p> : null}
-      {code ? <p>Short URL: {code}</p> : null}
+      {code ? <p>Short URL: {`${window.location.origin}/${code}`}</p> : null}
     </div >
   );
 }
