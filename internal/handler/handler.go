@@ -32,7 +32,7 @@ type ShortenReq struct {
 }
 
 type ShortenRes struct {
-	ShortURL string `json:"short_url"`
+	Code string `json:"code"`
 }
 
 func (h *handler) shorten(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +58,7 @@ func (h *handler) shorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := ShortenRes{code}
+	res := ShortenRes{Code: code}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

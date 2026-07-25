@@ -82,8 +82,8 @@ func TestShortenHandler(t *testing.T) {
 				if err := json.NewDecoder(w.Body).Decode(&res); err != nil {
 					t.Fatalf("failed to decode response: %v", err)
 				}
-				if res.ShortURL == "" {
-					t.Errorf("expected non-empty short_url")
+				if res.Code == "" {
+					t.Errorf("expected non-empty code")
 				}
 			}
 		})

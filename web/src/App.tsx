@@ -5,8 +5,14 @@ const App = () => {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
 
+  const baseUrl = window.location.origin;
+
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
+
+    setError("");
+    setCode("");
+
     const res = await fetch("/api/shorten", {
       method: "POST",
       headers: {
@@ -21,7 +27,9 @@ const App = () => {
     }
 
     const data = await res.json();
-    setCode(data.short_url)
+
+    setUrl("");
+    setCode(data.code);
   }
 
   return (
@@ -33,7 +41,7 @@ const App = () => {
       </form>
 
       {error ? <p>{error}</p> : null}
-      {code ? <p>Short URL: {`${window.location.origin}/${code}`}</p> : null}
+      {code ? <p>Short URL: <a href={`${baseUrl}/${code}`} target="_blank" rel="noopener noreferrer">{`${baseUrl}/${code}`}</a></p> : null}
     </div >
   );
 }

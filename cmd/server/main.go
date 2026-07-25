@@ -9,11 +9,18 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rizalta/url-short/server/internal/handler"
 	"github.com/rizalta/url-short/server/internal/service"
+	"github.com/rizalta/url-short/server/web"
 )
 
 func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+
+	staticMiddleware, err := web.StaticMiddleware()
+	if err != nil {
+		log.Fatalf("Failed to initialize static middleware: %v", err)
+	}
+	r.Use(staticMiddleware)
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -21,15 +28,7 @@ func main() {
 
 	s := service.NewService()
 	h := handler.NewHandler(s)
-
 	r.Mount("/", h.Routes())
-
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./web/dist/index.html")
-	})
-
-	fs := http.FileServer(http.Dir("./web/dist/assets"))
-	r.Handle("/assets/*", http.StripPrefix("/assets/", fs))
 
 	port := os.Getenv("PORT")
 	if port == "" {
