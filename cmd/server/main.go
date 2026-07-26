@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/rizalta/url-short/server/internal/config"
 	"github.com/rizalta/url-short/server/internal/handler"
 	"github.com/rizalta/url-short/server/internal/repo"
 	"github.com/rizalta/url-short/server/internal/service"
@@ -17,12 +17,15 @@ import (
 )
 
 func main() {
-	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"))
+	config := config.NewConfig()
+	dsn := fmt.Sprintf(
+		"postgresql://%s:%s@%s:%s/%s?sslmode=disable",
+		config.DBUser,
+		config.DBPassword,
+		config.DBHost,
+		config.DBPort,
+		config.DBName,
+	)
 
 	ctx := context.Background()
 
@@ -62,13 +65,8 @@ func main() {
 
 	r.Mount("/", h.Routes())
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8000"
-	}
-
-	log.Printf("Server starting on port :%s", port)
-	if err := http.ListenAndServe(":"+port, r); err != nil {
+	log.Printf("Server starting on port :%s", config.ServerPort)
+	if err := http.ListenAndServe(":"+config.ServerPort, r); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }
