@@ -2,6 +2,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net"
@@ -15,8 +16,8 @@ import (
 var ErrInvalidURL = errors.New("invalid URL")
 
 type Service interface {
-	Shorten(string) (string, error)
-	GetURL(string) string
+	Shorten(context.Context, string) (string, error)
+	GetURL(context.Context, string) (string, error)
 }
 
 type handler struct {
@@ -52,7 +53,7 @@ func (h *handler) shorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	code, err := h.service.Shorten(parsed)
+	code, err := h.service.Shorten(r.Context(), parsed)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -74,8 +75,8 @@ func (h *handler) getURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u := h.service.GetURL(code)
-	if u == "" {
+	u, err := h.service.GetURL(r.Context(), code)
+	if err != nil {
 		http.Error(w, "url not found", http.StatusNotFound)
 		return
 	}

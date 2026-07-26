@@ -2,7 +2,9 @@ package handler
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,14 +20,17 @@ func newMockService() *mockService {
 	}
 }
 
-func (m *mockService) Shorten(url string) (string, error) {
+func (m *mockService) Shorten(ctx context.Context, url string) (string, error) {
 	code := "abc123"
 	m.urls[code] = url
 	return code, nil
 }
 
-func (m *mockService) GetURL(code string) string {
-	return m.urls[code]
+func (m *mockService) GetURL(ctx context.Context, code string) (string, error) {
+	if url, exists := m.urls[code]; exists {
+		return url, nil
+	}
+	return "", errors.New("URL not found")
 }
 
 func TestShortenHandler(t *testing.T) {

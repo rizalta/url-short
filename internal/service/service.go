@@ -25,14 +25,14 @@ func NewService(q *repo.Queries) *service {
 	}
 }
 
-func (s *service) Shorten(url string) (string, error) {
+func (s *service) Shorten(ctx context.Context, url string) (string, error) {
 	for range maxRetries {
 		code, err := generateCode()
 		if err != nil {
 			return "", err
 		}
 
-		res, err := s.queries.CreateURL(context.Background(), repo.CreateURLParams{Code: code, OriginalUrl: url})
+		res, err := s.queries.CreateURL(ctx, repo.CreateURLParams{Code: code, OriginalUrl: url})
 		if err == nil {
 			return res.Code, nil
 		}
@@ -41,13 +41,13 @@ func (s *service) Shorten(url string) (string, error) {
 	return "", errors.New("max retries reached for generating code")
 }
 
-func (s *service) GetURL(code string) string {
-	u, err := s.queries.GetURL(context.Background(), code)
+func (s *service) GetURL(ctx context.Context, code string) (string, error) {
+	u, err := s.queries.GetURL(ctx, code)
 	if err != nil {
-		return ""
+		return "", err
 	}
 
-	return u
+	return u, nil
 }
 
 func generateCode() (string, error) {
