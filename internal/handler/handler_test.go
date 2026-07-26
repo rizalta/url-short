@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/rizalta/url-short/server/internal/service"
 )
 
 type mockService struct {
@@ -30,7 +31,7 @@ func (m *mockService) GetURL(ctx context.Context, code string) (string, error) {
 	if url, exists := m.urls[code]; exists {
 		return url, nil
 	}
-	return "", errors.New("URL not found")
+	return "", service.ErrURLNotFound
 }
 
 func TestShortenHandler(t *testing.T) {
