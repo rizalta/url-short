@@ -2,9 +2,11 @@
 package service
 
 import (
+	"context"
 	"crypto/rand"
 	"errors"
-	"sync"
+
+	"github.com/rizalta/url-short/server/internal/repo"
 )
 
 const (
@@ -14,29 +16,25 @@ const (
 )
 
 type service struct {
-	urls map[string]string
-	mu   sync.RWMutex
+	queries *repo.Queries
 }
 
-func NewService() *service {
+func NewService(q *repo.Queries) *service {
 	return &service{
-		urls: make(map[string]string),
-		mu:   sync.RWMutex{},
+		queries: q,
 	}
 }
 
 func (s *service) Shorten(url string) (string, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	for range maxRetries {
 		code, err := generateCode()
 		if err != nil {
 			return "", err
 		}
-		if _, ok := s.urls[code]; !ok {
-			s.urls[code] = url
-			return code, nil
+
+		res, err := s.queries.CreateURL(context.Background(), repo.CreateURLParams{Code: code, OriginalUrl: url})
+		if err == nil {
+			return res.Code, nil
 		}
 	}
 
@@ -44,10 +42,12 @@ func (s *service) Shorten(url string) (string, error) {
 }
 
 func (s *service) GetURL(code string) string {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	u, err := s.queries.GetURL(context.Background(), code)
+	if err != nil {
+		return ""
+	}
 
-	return s.urls[code]
+	return u
 }
 
 func generateCode() (string, error) {
