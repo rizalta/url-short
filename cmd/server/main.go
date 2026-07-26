@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	config := config.NewConfig()
+	config := config.Load()
 	dsn := fmt.Sprintf(
 		"postgresql://%s:%s@%s:%s/%s?sslmode=disable",
 		config.DBUser,

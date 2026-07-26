@@ -15,11 +15,16 @@ const (
 	maxRetries = 5
 )
 
-type service struct {
-	queries *repo.Queries
+type Querier interface {
+	CreateURL(ctx context.Context, params repo.CreateURLParams) (repo.Url, error)
+	GetURL(ctx context.Context, code string) (string, error)
 }
 
-func NewService(q *repo.Queries) *service {
+type service struct {
+	queries Querier
+}
+
+func NewService(q Querier) *service {
 	return &service{
 		queries: q,
 	}

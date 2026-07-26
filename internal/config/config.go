@@ -11,7 +11,7 @@ type Config struct {
 	ServerPort string
 }
 
-func NewConfig() *Config {
+func Load() *Config {
 	return &Config{
 		DBUser:     getEnv("DB_USER", "postgres"),
 		DBPassword: getEnv("DB_PASSWORD", "postgres"),
