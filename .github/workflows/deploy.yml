@@ -13,6 +13,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: action/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install pnpm and build frontend
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          cd web
+          pnpm install
+          pnpm build
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
