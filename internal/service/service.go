@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"errors"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/rizalta/url-short/server/internal/repo"
 )
 
@@ -13,6 +14,11 @@ const (
 	LENGTH     = 6
 	CHARSET    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	maxRetries = 5
+)
+
+var (
+	ErrURLNotFound = errors.New("url not found")
+	ErrCodeFailed  = errors.New("code generation failed")
 )
 
 type Querier interface {
@@ -43,12 +49,15 @@ func (s *service) Shorten(ctx context.Context, url string) (string, error) {
 		}
 	}
 
-	return "", errors.New("max retries reached for generating code")
+	return "", ErrCodeFailed
 }
 
 func (s *service) GetURL(ctx context.Context, code string) (string, error) {
 	u, err := s.queries.GetURL(ctx, code)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", ErrURLNotFound
+		}
 		return "", err
 	}
 

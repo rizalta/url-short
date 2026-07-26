@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rizalta/url-short/server/internal/service"
 )
 
 var ErrInvalidURL = errors.New("invalid URL")
@@ -36,6 +37,18 @@ type ShortenRes struct {
 	Code string `json:"code"`
 }
 
+type ErrorRes struct {
+	Error string `json:"error"`
+}
+
+func respondWithError(w http.ResponseWriter, statusCode int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	if err := json.NewEncoder(w).Encode(ErrorRes{Error: message}); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+}
+
 func (h *handler) shorten(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		_ = r.Body.Close()
@@ -43,26 +56,26 @@ func (h *handler) shorten(w http.ResponseWriter, r *http.Request) {
 	var req ShortenReq
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		respondWithError(w, http.StatusBadRequest, "Invalid Request")
 		return
 	}
 
 	parsed, err := normalizeURL(req.URL)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		respondWithError(w, http.StatusBadRequest, "Invalid URL")
 		return
 	}
 
 	code, err := h.service.Shorten(r.Context(), parsed)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		respondWithError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
 	res := ShortenRes{Code: code}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(res); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		respondWithError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 }
@@ -71,13 +84,17 @@ func (h *handler) getURL(w http.ResponseWriter, r *http.Request) {
 	code := chi.URLParam(r, "code")
 
 	if code == "" {
-		http.Error(w, "code required", http.StatusBadRequest)
+		respondWithError(w, http.StatusBadRequest, "Code Required")
 		return
 	}
 
 	u, err := h.service.GetURL(r.Context(), code)
 	if err != nil {
-		http.Error(w, "url not found", http.StatusNotFound)
+		if errors.Is(err, service.ErrURLNotFound) {
+			respondWithError(w, http.StatusNotFound, "URL not found")
+		} else {
+			respondWithError(w, http.StatusInternalServerError, "Internal Server Error")
+		}
 		return
 	}
 
