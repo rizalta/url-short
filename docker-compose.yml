@@ -28,7 +28,7 @@ services:
       dockerfile: Dockerfile
     container_name: url_short_app
     ports:
-      - "8000:8000"
+      - "${PORT:-8000}:${PORT:-8000}"
     environment:
       - PORT=${PORT:-8000}
       - DB_HOST=${DB_HOST:-postgres}
