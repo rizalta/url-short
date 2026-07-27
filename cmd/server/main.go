@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,6 +19,18 @@ import (
 
 func main() {
 	config := config.Load()
+
+	ctx := context.Background()
+
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+
+	staticMiddleware, err := web.StaticMiddleware()
+	if err != nil {
+		log.Fatalf("Failed to initialize static middleware: %v", err)
+	}
+	r.Use(staticMiddleware)
+
 	dsn := fmt.Sprintf(
 		"postgresql://%s:%s@%s:%s/%s?sslmode=disable",
 		config.DBUser,
@@ -26,14 +39,29 @@ func main() {
 		config.DBPort,
 		config.DBName,
 	)
-
-	ctx := context.Background()
-
 	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		log.Fatalf("failed to connect to db: %v", err)
 	}
 	defer pool.Close()
+
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if err := pool.Ping(r.Context()); err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_ = json.NewEncoder(w).Encode(map[string]string{
+				"status": "unhealthy",
+				"db":     "disconnected",
+			})
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]string{
+			"status": "healthy",
+			"db":     "connected",
+		})
+	})
 
 	schema := `
 	CREATE TABLE IF NOT EXISTS urls (
@@ -46,22 +74,9 @@ func main() {
 		log.Fatalf("faield to initialize database schema: %v", err)
 	}
 
-	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-
-	staticMiddleware, err := web.StaticMiddleware()
-	if err != nil {
-		log.Fatalf("Failed to initialize static middleware: %v", err)
-	}
-	r.Use(staticMiddleware)
-
 	q := repo.New(pool)
 	s := service.NewService(q)
 	h := handler.NewHandler(s)
-
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
 
 	r.Mount("/", h.Routes())
 
