@@ -59,14 +59,14 @@ body {
 
 .container {
   width: 100%;
-  max-width: 560px;
-  padding: 2.5rem;
+  max-width: 600px;
+  padding: 2.25rem;
   background: rgba(30, 30, 46, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(203, 166, 247, 0.15);
   border-radius: 24px;
-  box-shadow:
+  box-shadow: 
     0 20px 40px -15px rgba(0, 0, 0, 0.6),
     0 0 30px 0 rgba(203, 166, 247, 0.05);
   animation: containerEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1);
@@ -158,8 +158,8 @@ body {
 .result-card {
   background: var(--ctp-mantle);
   border: 1px solid var(--ctp-surface1);
-  border-radius: 16px;
-  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -170,8 +170,8 @@ body {
 
 .result-link {
   color: var(--ctp-sapphire);
-  font-weight: 600;
-  font-size: 1.05rem;
+  font-weight: 500;
+  font-size: 0.925rem;
   text-decoration: none;
   word-break: break-all;
   min-width: 0;
@@ -188,12 +188,12 @@ body {
   background: var(--ctp-surface0);
   color: var(--ctp-text);
   border: 1px solid var(--ctp-surface1);
-  padding: 0.6rem 1rem;
-  border-radius: 10px;
-  font-size: 0.875rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.825rem;
   font-weight: 600;
   cursor: pointer;
-  min-width: 100px;
+  min-width: 90px;
   text-align: center;
   flex-shrink: 0;
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
